@@ -1,0 +1,137 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Basic Demo &mdash; Oxydizr</title>
+	<style type="text/css">
+		ol {
+			border: 1px solid #000;
+			border-radius: .67em;
+			list-style-position: inside;
+			margin: 0;
+			padding: .67em 0;
+		}
+		ol>li {
+			cursor: default;
+			margin: 0;
+			padding: .33em 0 .33em .5em;
+		}
+		ol>li.selected {
+			background-color: #ffc;
+		}
+	</style>
+</head>
+<body>
+	<!-- The HTML -->
+	<div id="basic">
+		<form method="get" action="#" data-actions="tasks.add">
+			<p>
+				Task: <input type="text" name="title"> <button type="submit">Add</button>
+			</p>
+		</form>
+		<p>
+			<button data-actions="tasks.removeSelected">Remove Selected</button>
+		</p>
+		<ol>
+			<li data-actions="tasks.toggleSelection">Take out the trash <button data-actions="tasks.remove">X</button></li>
+			<li data-actions="tasks.toggleSelection">Shop for groceries <button data-actions="tasks.remove">X</button></li>
+		</ol>
+	</div>
+
+	<p>
+		<a href="./index.html">Back</a>
+	</p>
+
+	<!-- Oxydizr source -->
+	<script type="text/javascript" src="../src/Oxydizr.js"></script>
+	<script type="text/javascript" src="../src/Oxydizr/FrontController.js"></script>
+
+	<!-- The "Controller" class implementing Oxydizr.IController -->
+	<script type="text/javascript">
+		function TaskListController() {
+		}
+
+		TaskListController.prototype = {
+
+			controllerId: null,
+
+			element: null,
+
+			init: function(elementOrId) {
+				this.element = typeof elementOrId === "string" ? document.getElementById(elementOrId) : elementOrId;
+			},
+
+			onControllerRegistered: function(delegator, controllerId) {
+				delegator.registerEvents("click", "submit");
+			},
+
+			onControllerunRegistered: function(delegator) {
+				// do some cleanup work
+			},
+
+			// <form data-actions="tasks.add">
+			add: function submit(event, element, params) {
+				event.stop();
+
+				var form = element.form || element;
+				var task = form.elements.title.value;
+
+				if (/^\s*$/.test(task)) {
+					alert("Please enter a task");
+				}
+				else {
+					var item = document.createElement("li");
+					item.setAttribute("data-actions", "tasks.toggleSelection");
+					item.innerHTML = task + ' <button data-actions="tasks.remove">X</button>';
+
+					this.element.getElementsByTagName("ol")[0].appendChild(item);
+				}
+
+				form.elements.title.value = "";
+				form.elements.title.focus();
+			},
+
+			// <button data-actions="tasks.remove">
+			remove: function click(event, element, params) {
+				event.preventDefault();
+
+				if (confirm("Are you sure you want to remove this task?")) {
+					var item = element.parentNode;
+					item.parentNode.removeChild(item);
+				}
+			},
+
+			// <button data-actions="tasks.removeSelected">
+			removeSelected: function click(event, element, params) {
+				var items = this.element.querySelectorAll("li.selected");
+
+				if (items && items.length && confirm("Are you sure you want to remove selected items?")) {
+					for (var i = 0, length = items.length; i < length; i++) {
+						items[i].parentNode.removeChild(items[i]);
+					}
+				}
+			},
+
+			// <li data-actions="tasks.toggleSelected">
+			toggleSelection: function click(event, element, params) {
+				element.className = (element.className == "selected") ? "" : "selected";
+			}
+
+		};
+	</script>
+
+	<!-- Make it happen -->
+	<script type="text/javascript">
+		// 1. Create the Front Controller
+		var frontContoller = new Oxydizr.FrontController().init(document.documentElement);
+
+		// 2. Create the task list controller
+		var taskListController = new TaskListController();
+		taskListController.init("basic");
+		taskListController.controllerId = "tasks";
+
+		// 3. Register the task list controller with the front controller
+		frontContoller.registerController(taskListController);
+	</script>
+</body>
+</html>

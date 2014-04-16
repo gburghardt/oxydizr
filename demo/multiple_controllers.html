@@ -1,0 +1,74 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Multiple Controllers &mdash; Oxydizr</title>
+</head>
+<body>
+	<p>More than one controller can respond to actions on a single DOM node.</p>
+	<p>Open your browser's console and click the button below:</p>
+
+	<p>
+		<button type="button" data-actions="item.show stats.record">Click Me!</button>
+	</p>
+
+	<p>
+		<a href="./index.html">Back</a>
+	</p>
+
+	<script type="text/javascript" src="../src/Oxydizr.js"></script>
+	<script type="text/javascript" src="../src/Oxydizr/FrontController.js"></script>
+	<script type="text/javascript">
+		function ItemController(element) {
+			this.element = typeof element === "string"
+			             ? document.getElementById(element)
+			             : element;
+		}
+		ItemController.prototype = {
+			controllerId: "item",
+
+			constructor: ItemController,
+
+			onControllerRegistered: function(delegator, controllerId) {
+				delegator.registerEvents("click");
+			},
+
+			onControllerunRegistered: function(delegator) {
+				// do some cleanup work
+			},
+
+			show: function click(event, element, params) {
+				console.info("Show the item!");
+			}
+		};
+
+		function StatsController(element) {
+			this.element = typeof element === "string"
+			             ? document.getElementById(element)
+			             : element;
+		}
+		StatsController.prototype = {
+			controllerId: "stats",
+
+			constructor: StatsController,
+
+			onControllerRegistered: function(delegator, controllerId) {
+				delegator.registerEvents("click");
+			},
+
+			onControllerunRegistered: function(delegator) {
+				// do some cleanup work
+			},
+
+			record: function click(event, element, params) {
+				console.info("The user clicked on this:", element);
+			}
+		};
+
+		var frontContoller = new Oxydizr.FrontController().init(document.documentElement);
+
+		frontContoller.registerController(new ItemController(document.body));
+		frontContoller.registerController(new StatsController(document.body));
+	</script>
+</body>
+</html>

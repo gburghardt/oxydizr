@@ -1,0 +1,17 @@
+{
+	"name": "oxydizr",
+	"description": "Oxydizr is an event delegation library for JavaScript requiring no external dependencies.",
+	"license": "MIT",
+	"version": "1.0.0",
+	"authors": [
+		"Greg Burghardt <greg_burghardt@yahoo.com>"
+	],
+	"homepage": "https://github.com/gburghardt/oxydizr",
+	"repository": { "type": "git", "url": "https://github.com/gburghardt/oxydizr.git" },
+	"main": [
+	],
+	"keywords": ["javascript", "document object model", "dom", "event", "delegation"],
+	"devDependencies": {
+		"jasmine-data_driven_tests": "~1.0"
+	}
+}

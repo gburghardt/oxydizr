@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Using Action Params &mdash; Oxydizr</title>
+</head>
+<body>
+	<div id="shoppingCart">
+		<h1>Shopping Cart</h1>
+		<p>Click the "Delete" link to see how you can use Action Params.</p>
+		<ul>
+			<li>
+				Coffee
+				<a href="#" data-actions="shoppingCart.deleteItem" data-action-params='{
+					"shoppingCart.deleteItem": {
+						"item": {
+							"id": 123
+						}
+					}
+				}'>Delete</a>
+			</li>
+			<li>
+				Carrots
+				<a href="#" data-actions="shoppingCart.deleteItem" data-action-params='{
+					"shoppingCart.deleteItem": {
+						"item": {
+							"id": 124
+						}
+					}
+				}'>Delete</a>
+			</li>
+		</ul>
+	</div>
+
+	<p>
+		<a href="./index.html">Back</a>
+	</p>
+
+	<script type="text/javascript" src="../src/Oxydizr.js"></script>
+	<script type="text/javascript" src="../src/Oxydizr/FrontController.js"></script>
+	<script type="text/javascript">
+		function ShoppingCartController(element) {
+			this.element = typeof element === "string"
+			             ? document.getElementById(element)
+			             : element;
+		}
+		ShoppingCartController.prototype = {
+			controllerId: "shoppingCart",
+
+			constructor: ShoppingCartController,
+
+			onControllerRegistered: function(frontController, controllerId) {
+				frontController.registerEvents("click");
+			},
+
+			onControllerunRegistered: function(frontController) {
+				// do some cleanup work
+			},
+
+			deleteItem: function click(event, element, params) {
+				if (confirm("Are you sure you want to item #" + params.item.id + "?")) {
+					var item = element.parentNode;
+					item.parentNode.removeChild(item);
+				}
+			}
+		};
+
+		var frontContoller = new Oxydizr.FrontController().init(document.documentElement);
+
+		frontContoller.registerController(new ShoppingCartController("shoppingCart"));
+	</script>
+</body>
+</html>
