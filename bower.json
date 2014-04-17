@@ -9,6 +9,8 @@
 	"homepage": "https://github.com/gburghardt/oxydizr",
 	"repository": { "type": "git", "url": "https://github.com/gburghardt/oxydizr.git" },
 	"main": [
+		"src/Oxydizr.js",
+		"src/Oxydizr/FrontController.js"
 	],
 	"keywords": ["javascript", "document object model", "dom", "event", "delegation"],
 	"devDependencies": {
