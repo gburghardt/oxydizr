@@ -184,6 +184,11 @@ controller object, which you can refer to using the `controllers` property.
 
 See `demo/simple.html` for a live example of this code.
 
+### What's Next?
+
+Clone the [repository](https://github.com/gburghardt/oxydizr) and check out the
+demos (`demo/index.html`).
+
 ## How Event Delegation Works
 
 They key to Oxydizr is Event Delegation. The root element of
@@ -257,7 +262,7 @@ When the user clicks on the `<img>` tag, this becomes the target of the click
 event. The `<img>` is notified first of the mouse click. After those event
 handlers have been processed, the `<a>` is notified of the click event, then the
 `<p>` and so on until the top of the document tree is reached. Only when the
-`<html>` tag is notified by the browser of the click event does Oxysizr respond:
+`<html>` tag is notified by the browser of the click event does Oxydizr respond:
 
 1. Oxydizr patches the browser event object, adding a method called `stop()`
    that calls `stopPropagation()` and `preventDefault()`. This is just a
@@ -289,8 +294,8 @@ handlers have been processed, the `<a>` is notified of the click event, then the
    Notice how the `showFullSizeImage` method is defined with a named function.
    The `function click` part tells Oxydizr that this method should only be
    executed during a click event. Since Oxydizr is currently processing a click
-   event and the `Slideshow.prototype.showFullSizeImage.name` property is
-   "click", Oxydizr proceeds to invoke this method.
+   event and the `SlideshowController.prototype.showFullSizeImage.name` property
+   is "click", Oxydizr proceeds to invoke this method.
 6. Oxydizr attempts to extract the `params` for this controller action by
    looking for a `data-action-params` attribute on the `<a>` tag. It finds none,
    so the `params` object passed into `SlideshowController#showFullSizeImage`
@@ -317,20 +322,266 @@ handlers have been processed, the `<a>` is notified of the click event, then the
 
 ## Action Params
 
+Action Params are passed to each controller method when an action is executed.
+Params are just a plain old JavaScript object, which is taken from the
+`data-action-params` attribute on the HTML tag that has the `data-actions`
+attribute. The `data-action-params` contains a JSON string passed to
+`JSON.parse`. If this attribute is missing, then an empty Object is passed to
+the controller action method.
+
+The `data-action-params` must be structured in the following way:
+
+    {
+        "controllerId1.methodName": {
+            ...
+        },
+        "controllerId2.methodName": {
+            ...
+        }
+    }
+
+Since every HTML element can have multiple controller actions associated with
+it, the params passed to each controller method should be namespaced to the
+`controllerId` followed by a dot and the name of the method. Let's say we have
+this HTML tag:
+
+    <button
+        data-actions="blogPost.save slideshow.save"
+        data-action-params='{
+            "blogPost.save": {
+                id: 85
+            },
+            "slideshow.save": {
+                blogPostId: 85,
+                id: 482
+            }
+        }'
+    >Save</button>
+
+The "Save" button executes two controller actions on two different controllers.
+
+The `params` passed to the `save` method on the "blogPost" controller is the
+value of the "blogPost.save" property. The `save` method on the "slideshow"
+controller is the "slideshow.save" property. Let's look at the pseudo JavaScript
+code for each controller:
+
+    function BlogPostController() {}
+
+    BlogPostController.prototype = {
+        controllerId: "blogPost",
+
+        constructor: BlogPostController,
+
+        save: function click(event, element, params) {
+            console.log(params);
+        }
+    };
+
+    function SlideshowController() {}
+
+    SlideshowController.prototype = {
+        controllerId: "blogPost",
+
+        constructor: SlideshowController,
+
+        save: function click(event, element, params) {
+            console.log(params);
+        }
+    };
+
+Clicking the "Save" button will pass the following values to
+`BlogPostController#save`:
+
+- event = The browser "click" event object
+- element = `<button>`
+- params = `{ id: 85 }`
+
+The following values get passed to `SlideshowController#save`:
+
+- event = The browser "click" event object
+- element = `<button>`
+- params = `{ id: 482, blogPostId: 85 }`
+
 ## Special Events
+
+Most DOM events bubble, like "click" and "keypress". There are two events that
+must be treated differently either because the event does not bubble, or because
+a DOM event needs to be filtered in a common way.
 
 ### The `enterpress` Event
 
+If we disconnect from JavaScript for a moment and think of how forms in HTML can
+be submitted, you'll see that there are two ways a user submits a form:
+
+- Clicking a "Submit" button
+- Pressing the ENTER key while focus is on a text box
+
+Responding to the "submit" event is easy. If you do not have a `<form>`, then no
+submit event will ever be triggered, even if the user presses the ENTER key
+while focus is on a text field. The special "enterpress" event in Oxydizr was
+created to handle this situation.
+
+The `enterpress` event is really just another `keypress` event listener, but it
+uses a different event handler function on Oxydizr.FrontController. This event
+handler inspects the `event.keyCode` property, and if it is `13` then Oxydizr
+proceeds to execute actions found in the `data-actions` attribute.
+
 ### The `focus` and `blur` Events
 
-## Controller Best Practices
-
-## Error Handling
-
-### Error Handling at the Application Level
-
-### Error Handling at the Controller Level
+These two events do not bubble up the document tree. In order to respond to a
+`focus` event, you must bind an event handler directly to the element that emits
+this event. This breaks the Event Delegation of Oxydizr. The `focusin` event is
+a bubbling form of the focus event, and focusout is the bubbling form of the
+blur event. Browser support is spotty for these events, so Oxydizr patches this
+behavior by attaching a focus or blur event handler as a capturing event.
 
 ## Adapters for Popular JavaScript Frameworks and Libraries
 
+Even though Oxydizr does not require outside dependencies, frameworks like
+jQuery patch many browser inconsistencies with how events are processed. As a
+result, we've created Adapters that allow the event handling in Oxydizr to be
+done through many of the popular libraries out there.
+
+For example, if you are using jQuery and would like Oxydizr to use jQuery for
+event handling, add these script files to your document:
+
+    <script type="text/javascript" src="path/to/Oxydizr.js"></script>
+    <script type="text/javascript" src="path/to/Oxydizr/FrontController.js"></script>
+    <script type="text/javascript" src="path/to/Oxydizr/Adapters/jQueryAdapter.js"></script>
+
+That's all you need to do. Now the `event` object that gets passed into your
+controller actions will have been patched by jQuery.
+
 ### Creating Your Own Adapters
+
+If you do not see an Adapter that fits your needs, use this boiler plate code
+to create your own:
+
+    Oxydizr.FrontController.prototype._addEventListener: function(element, name, handler, capture) {
+        if ((name === "focus" || name === "blur") && capture) {
+            // listen for focus or blur events
+        }
+        else {
+            // listen for other events
+        }
+    };
+
+    Oxydizr.FrontController.prototype._removeEventListener = function(element, name, handler, capture) {
+        if ((name === "focus" || name === "blur") && capture) {
+            // unbind from focus or blur events
+        }
+        else {
+            // unbind other events
+        }
+    };
+
+Save your Adapter in a separate JavaScript file and include it after
+FontController.js.
+
+## Controller Best Practices
+
+When creating controllers for use with Oxydizr, consider these best practices:
+
+- Controllers should have a constructor that takes no arguments
+- Controllers should only care about a small section of the web page, and have
+  access to a root element, which may not be the same as the root element of the
+  Front Controller
+- All controllers should specify their own `controllerId`'s. If you need more
+  than one instance of a particular controller on the page, consider setting the
+  `controllerId` based on the Id of the controller's root element.
+
+## Error Handling
+
+Oxydizr gives you finer grained control over error handling when processing DOM
+events. By default, error handling is turned off. If a controller action throws
+an error, it is allowed to bubble up and the DOM event is not canceled. By
+setting the `catchErrors` property on Oxydizr.FrontController to `true`, you
+will have access to two levels of error handling.
+
+    var frontController = new Oxydizr.FrontController().init(document.documentElement);
+
+    // Handle errors thrown when executing controller actions
+    frontController.catchErrors = true;
+
+### Error Handling at the Application Level
+
+You can designate one Object in your application to handle all errors thrown
+while executing controller actions. This is the `errorHandler` property, which
+is any object that supports the Oxydizr.IErrorHandler interface in
+`src/interfaces.js`. The object must support a single method called
+`handleActionError`, which takes the following arguments:
+
+1. error (Error): The error thrown
+2. event (Event): The browser event in which the error was thrown
+3. element (HTMLElement): The DOM node that was the focus of the controller action
+4. params (Object): The params passed into the controller action
+5. action (String): The name of the action being executed
+6. controller (Oxydizr.IController): The controller that threw this error
+7. controllerId (String): The Id of the controller registered in the front controller
+
+This gives you a central location to handle all errors. By default, Oxydizr
+comes with a global error handler that just logs the arguments to the browser's
+console.
+
+If this method returns `true` then Oxydizr assumes the error has been handled.
+If `false` is returned, Oxydizr will rethrow the error;
+
+### Error Handling at the Controller Level
+
+If you want to do error handling specific to a controller, make sure your
+controller objects support the Oxydizr.IControllerErrorHandler interface in
+`src/interfaces.js`. Your controller must implement a method called
+`handleActionError` which takes the following arguments:
+
+1. error (Error): The error thrown
+2. controller (Oxydizr.IController): The controller that threw this error
+3. event (Event): The browser event in which the error was thrown
+4. element (HTMLElement): The DOM node that was the focus of the controller action
+5. params (Object): The params passed into the controller action
+6. action (String): The name of the action being executed
+7. controllerId (String): The Id of the controller registered in the front controller
+
+If this method returns `true` then Oxydizr assumes the error has been handled.
+If `false` is returned, Oxydizr will rethrow the error;
+
+## Browser Support
+
+Without an Adapter, Oxydizr supports these browsers:
+
+- Internet Explorer 9+
+- Firefox
+- Chrome
+- Safari
+
+The only real limitation is browser support for the `addEventListener` and
+`removeEventListener` methods on DOM nodes.
+
+If you choose an Adapter, for instance the jQuery Adapter, then Oxydizr supports
+any browser that jQuery supports.
+
+## Notes About JavaScript Minification
+
+There is a known issue with some JavaScript minifiers that will cause
+controllers defined in minified code to stop responding to DOM events. If you
+recall from earlier, Oxydizr looks at a controller method's name to know if the
+method should be invoked for a certain event type. If a JavaScript minifier
+takes this code:
+
+    var someFunction = function foo() {};
+
+And turns it into:
+
+    var a = function() {};
+
+The `function foo()` part is what gives that Function object its name, and
+removing that essentially changes runtime data in JavaScript. Oxydizr will fail
+in this scenario. This is an issue that needs to be addressed in the JavaScript
+minifier.
+
+## Contributing
+
+1. Fork the repository at GitHub: https://github.com/gburghardt/oxydizr
+2. Clone your fork
+3. Create a feature branch in Git
+4. Commit your changes and push your branch
+5. Submit a [pull request](https://github.com/gburghardt/oxydizr/pulls)

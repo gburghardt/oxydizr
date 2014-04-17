@@ -3,7 +3,7 @@ describe("FrontController", function() {
 	function MockController() {}
 	MockController.prototype.controllerId = null;
 	MockController.prototype.onControllerRegistered = function() {};
-	MockController.prototype.onUnregisterController = function() {};
+	MockController.prototype.onControllerUnregistered = function() {};
 
 	var controller,
 	    event,
@@ -28,16 +28,16 @@ describe("FrontController", function() {
 			var c1 = new MockController(),
 			    c2 = new MockController();
 
-			spyOn(c1, "onUnregisterController");
-			spyOn(c2, "onUnregisterController");
+			spyOn(c1, "onControllerUnregistered");
+			spyOn(c2, "onControllerUnregistered");
 
 			delegator.registerController(c1);
 			delegator.registerController(c2);
 
 			delegator.destructor();
 
-			expect(c1.onUnregisterController).toHaveBeenCalledWith(delegator);
-			expect(c2.onUnregisterController).toHaveBeenCalledWith(delegator);
+			expect(c1.onControllerUnregistered).toHaveBeenCalledWith(delegator);
+			expect(c2.onControllerUnregistered).toHaveBeenCalledWith(delegator);
 
 			expect(delegator.controllers).toBe(null);
 		});
@@ -139,11 +139,11 @@ describe("FrontController", function() {
 			delegator = new Oxydizr.FrontController();
 		});
 
-		it("returns the action if the controller has a method matching the action", function() {
+		it("returns null if the controller has a method matching the action whose name property does not match the event type", function() {
 			controller.foo = function() {};
 
 			expect(delegator._getMethodFromAction(controller, "foo", new Oxydizr.MockEvent()))
-				.toBe("foo");
+				.toBe(null);
 		});
 
 		it("returns the action if the controller has a method matching the action whose name property matches the event type", function() {
@@ -210,13 +210,13 @@ describe("FrontController", function() {
 			}).not.toThrowError();
 		});
 
-		it("calls the controller method", function() {
+		it("does not call the controller method if the method's name property does not match the event type", function() {
 			controller.foo = function() {};
 			spyOn(controller, "foo");
 
 			delegator._invokeAction(controllerId, "foo", event, element, params);
 
-			expect(controller.foo).toHaveBeenCalledWith(event, element, params, "foo");
+			expect(controller.foo).not.toHaveBeenCalled();
 		});
 
 		describe("when 'catchErrors' is true", function() {
@@ -229,7 +229,7 @@ describe("FrontController", function() {
 				delegator.errorHandler = {
 					handleActionError: function() { return true; }
 				};
-				controller.foo = function() {
+				controller.foo = function click() {
 					throw error;
 				};
 			});
@@ -347,37 +347,41 @@ describe("FrontController", function() {
 			});
 
 			it("invokes a single action", function() {
-				controller.foo = function() {};
-				spyOn(controller, "foo");
+				var spy = jasmine.createSpy();
+
+				controller.foo = function click(event, element, params, action) {
+					spy(event, element, params, action);
+				};
+
 				target.setAttribute("data-actions", controllerId + ".foo");
 
 				delegator._propagateEvent(target, event);
 
-				expect(controller.foo).toHaveBeenCalledWith(event, target, {}, "foo");
+				expect(spy).toHaveBeenCalledWith(event, target, {}, "foo");
 			});
 
 			it("invokes multiple actions on the same element", function() {
-				controller.foo = function() {};
-				controller.bar = function() {};
-				spyOn(controller, "foo");
-				spyOn(controller, "bar");
+				var spy1 = jasmine.createSpy();
+				var spy2 = jasmine.createSpy();
+				controller.foo = function click(event, element, params, action) { spy1(event, element, params, action); };
+				controller.bar = function click(event, element, params, action) { spy2(event, element, params, action); };
 				target.setAttribute("data-actions", controllerId + ".foo " + controllerId + ".bar");
 				delegator._propagateEvent(target, event);
 
-				expect(controller.foo).toHaveBeenCalledWith(event, target, {}, "foo");
-				expect(controller.bar).toHaveBeenCalledWith(event, target, {}, "bar");
+				expect(spy1).toHaveBeenCalledWith(event, target, {}, "foo");
+				expect(spy2).toHaveBeenCalledWith(event, target, {}, "bar");
 			});
 
 			it("stops invoking actions if the event is stopped", function() {
-				controller.foo = function(event) { event.stop(); };
-				controller.bar = function() {};
-				spyOn(controller, "foo").and.callThrough();
-				spyOn(controller, "bar");
+				var spy1 = jasmine.createSpy();
+				var spy2 = jasmine.createSpy();
+				controller.foo = function click(event, element, params, action) { event.stop(); spy1(event, element, params, action); };
+				controller.bar = function click(event, element, params, action) { spy2(event, element, params, action); };
 				target.setAttribute("data-actions", controllerId + ".foo " + controllerId + ".bar");
 				delegator._propagateEvent(target, event);
 
-				expect(controller.foo).toHaveBeenCalledWith(event, target, {}, "foo");
-				expect(controller.bar).not.toHaveBeenCalled();
+				expect(spy1).toHaveBeenCalledWith(event, target, {}, "foo");
+				expect(spy2).not.toHaveBeenCalled();
 			});
 
 		});
@@ -433,32 +437,38 @@ describe("FrontController", function() {
 					controllerId + ".bar " + controllerId + ".baz");
 				ul.setAttribute("data-actions", controllerId + ".foobar");
 
-				controller.foo = function() {};
-				controller.bar = function(event, element, params, action) {
-					event.stopPropagation();
+				var spy1 = jasmine.createSpy(),
+				    spy2 = jasmine.createSpy(),
+				    spy3 = jasmine.createSpy(),
+				    spy4 = jasmine.createSpy();
+
+				controller.foo = function click(event, element, params, action) {
+					spy1(event, element, params, action);
 				};
-				controller.baz = function() {};
-				controller.foobar = function() {};
+				controller.bar = function click(event, element, params, action) {
+					event.stopPropagation();
+					spy2(event, element, params, action);
+				};
+				controller.baz = function click(event, element, params, action) {
+					spy3(event, element, params, action);
+				};
+				controller.foobar = function click(event, element, params, action) {
+					spy4(event, element, params, action);
+				};
 
 				var params = {};
 				params[controllerId + ".foo"] = {};
 				params[controllerId + ".bar"] = {};
 
 				spyOn(delegator, "_getParams").and.returnValue(params);
-
-				spyOn(controller, "foo");
-				spyOn(controller, "bar").and.callThrough();
-				spyOn(controller, "baz");
-				spyOn(controller, "foobar");
-
 				spyOn(delegator, "_invokeAction").and.callThrough();
 
 				delegator._propagateEvent(a, event);
 
-				expect(controller.foo).toHaveBeenCalledWith(event, a, params[controllerId + ".foo"], "foo");
-				expect(controller.bar).toHaveBeenCalledWith(event, li, params[controllerId + ".bar"], "bar");
-				expect(controller.baz).not.toHaveBeenCalled();
-				expect(controller.foobar).not.toHaveBeenCalled();
+				expect(spy1).toHaveBeenCalledWith(event, a, params[controllerId + ".foo"], "foo");
+				expect(spy2).toHaveBeenCalledWith(event, li, params[controllerId + ".bar"], "bar");
+				expect(spy3).not.toHaveBeenCalled();
+				expect(spy4).not.toHaveBeenCalled();
 				expect(event.__isStopped).toBe(true);
 			});
 
@@ -661,19 +671,19 @@ describe("FrontController", function() {
 		beforeEach(function() {
 			delegator = new Oxydizr.FrontController();
 			controller = new MockController();
-			spyOn(controller, "onUnregisterController");
+			spyOn(controller, "onControllerUnregistered");
 		});
 
 		it("returns false if the controllerId is not registered", function() {
 			controller.controllerId = "test";
 
 			expect(delegator.unregisterController(controller)).toBe(false);
-			expect(controller.onUnregisterController).not.toHaveBeenCalled();
+			expect(controller.onControllerUnregistered).not.toHaveBeenCalled();
 		});
 
 		it("returns false if the controllerId is missing", function() {
 			expect(delegator.unregisterController(controller)).toBe(false);
-			expect(controller.onUnregisterController).not.toHaveBeenCalled();
+			expect(controller.onControllerUnregistered).not.toHaveBeenCalled();
 		});
 
 		it("returns true for a registered controller", function() {
@@ -681,7 +691,7 @@ describe("FrontController", function() {
 			delegator.registerController(controller);
 
 			expect(delegator.unregisterController(controller)).toBe(true);
-			expect(controller.onUnregisterController).toHaveBeenCalledWith(delegator);
+			expect(controller.onControllerUnregistered).toHaveBeenCalledWith(delegator);
 		});
 	});
 

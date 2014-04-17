@@ -106,7 +106,7 @@ Oxydizr.FrontController.prototype = {
 	_getMethodFromAction: function(controller, action, event) {
 		var method = null;
 
-		if (controller[action] && (!controller[action].name || controller[action].name === event.type)) {
+		if (controller[action] && controller[action].name === event.type) {
 			method = action;
 		}
 		else if (controller.handleAction) {
