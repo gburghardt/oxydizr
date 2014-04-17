@@ -1,0 +1,96 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Simple Demo &mdash; Oxydizr</title>
+	<style type="text/css">
+		ol, ul {
+			border: 1px solid #000;
+			border-radius: .67em;
+			list-style-position: inside;
+			margin: 1em 0;
+			padding: .67em 0;
+		}
+		li {
+			cursor: pointer;
+			margin: 0;
+			padding: .33em 0 .33em .5em;
+		}
+		li.selected {
+			background-color: #ffc;
+		}
+	</style>
+</head>
+<body>
+	<p>Click the items below to toggle the selection:</p>
+
+	<!-- The HTML -->
+
+	<h2>Fruits</h2>
+	<ol id="fruits">
+		<li data-actions="fruits.toggleSelection">Apples</li>
+		<li data-actions="fruits.toggleSelection">Oranges</li>
+	</ol>
+
+	<h2>Colors</h2>
+	<ul id="colors">
+		<li data-actions="colors.toggleSelection">Red</li>
+		<li data-actions="colors.toggleSelection">Green</li>
+	</ul>
+
+	<p>Open the browser console and run these lines of code to find the controller objects registered in Oxydizr:</p>
+
+<pre>
+frontController.controllers        // All registered controllers
+frontController.controllers.fruits // Controller for the "Fruits" list
+frontController.controllers.colors // Controller for the "Colors" list
+</pre>
+
+	<!-- Oxydizr source -->
+	<script type="text/javascript" src="../src/Oxydizr.js"></script>
+	<script type="text/javascript" src="../src/Oxydizr/FrontController.js"></script>
+
+	<!-- The "Controller" class implementing Oxydizr.IController -->
+	<script type="text/javascript">
+		function SelectionController(element, controllerId) {
+			this.element = typeof element === "string" ? document.getElementById(element) : element;
+			this.controllerId = controllerId || this.element.id || null;
+		}
+
+		SelectionController.prototype = {
+
+			controllerId: null,
+
+			constructor: SelectionController,
+
+			onControllerRegistered: function(frontController, controllerId) {
+				frontController.registerEvents("click");
+			},
+
+			onControllerUnregistered: function(frontController) {
+				// this controller has been unregistered
+			},
+
+			toggleSelection: function click(event, element, params) {
+				if (element.classList.contains("selected")) {
+					element.classList.remove("selected");
+				}
+				else {
+					element.classList.add("selected");
+				}
+			}
+
+		};
+	</script>
+
+	<!-- Make it happen -->
+	<script type="text/javascript">
+		// 1. Create the Front Controller
+		var frontController = new Oxydizr.FrontController().init(document.documentElement);
+
+		// 2. Register the controllers
+		frontController.registerController(new SelectionController("fruits"));
+		frontController.registerController(new SelectionController("colors"));
+	</script>
+</body>
+</html>
