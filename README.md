@@ -125,7 +125,7 @@ interface found in `src/interfaces.js`.
                 element.classList.remove("selected");
             }
             else {
-              element.classList.add("selected");
+                element.classList.add("selected");
             }
         }
     };
