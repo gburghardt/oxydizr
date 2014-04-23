@@ -68,6 +68,9 @@ Oxydizr.FrontController.prototype = {
 			throw new Error("Missing required argument: element");
 		}
 
+		// click and submit events are so common that we just subscribe to them
+		this.registerEvents("click", "submit");
+
 		return this;
 	},
 
