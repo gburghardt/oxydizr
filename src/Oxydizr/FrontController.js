@@ -109,7 +109,7 @@ Oxydizr.FrontController.prototype = {
 	_getMethodFromAction: function(controller, action, event) {
 		var method = null;
 
-		if (controller[action] && controller[action].name === event.type) {
+		if (controller[action] && controller[action].name === (event.__type || event.type)) {
 			method = action;
 		}
 		else if (controller.handleAction) {
@@ -127,6 +127,7 @@ Oxydizr.FrontController.prototype = {
 
 	handleEnterpress: function(event) {
 		if (event.keyCode === 13) {
+			event.__type = "enterpress";
 			this.handleEvent(event);
 		}
 	},

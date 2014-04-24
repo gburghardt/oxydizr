@@ -609,8 +609,8 @@ describe("FrontController", function() {
 		});
 
 		it("does not remove the DOM event if it has not been registered", function() {
-			delegator._removeEvent(element, "click", {
-				name: "click",
+			delegator._removeEvent(element, "mousedown", {
+				name: "mousedown",
 				handler: function() {},
 				capture: false
 			});
