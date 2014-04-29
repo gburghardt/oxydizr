@@ -283,6 +283,7 @@ Oxydizr.FrontController.prototype = {
 		}
 		else {
 			this.controllers[controller.controllerId] = null;
+			delete this.controllers[controller.controllerId];
 			controller.onControllerUnregistered(this);
 			return true;
 		}
