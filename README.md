@@ -28,11 +28,13 @@ You can get Oxydizr in one of two ways:
 
 1. Add Oxydizr to your `bower.json` file:
 
-        {
-            "dependencies": {
-                "oxydizr": "~1.0"
-            }
-        }
+  ```javascript
+  {
+      "dependencies": {
+          "oxydizr": "~1.0"
+      }
+  }
+  ```
 
 2. Then `bower install`
 
@@ -44,18 +46,24 @@ Download a fresh copy: https://github.com/gburghardt/oxydizr/archive/master.zip
 
 Since Oxydizr has no external dependencies, simply include the script files:
 
-    <script type="text/javascript" src="path/to/Oxydizr.js"></script>
-    <script type="text/javascript" src="path/to/Oxydizr/FrontController.js"></script>
+```html
+<script type="text/javascript" src="path/to/Oxydizr.js"></script>
+<script type="text/javascript" src="path/to/Oxydizr/FrontController.js"></script>
+```
 
 Next, you'll need to create an instance of Oxydizr.FrontController:
 
-    <script type="text/javascript">
-        var frontController = new Oxydizr.FrontController().init(document.documentElement);
-    </script>
+```html
+<script type="text/javascript">
+    var frontController = new Oxydizr.FrontController().init(document.documentElement);
+</script>
+```
 
 After that, simply register your controller objects:
 
-    frontController.registerController(controller);
+```javascript
+frontController.registerController(controller);
+```
 
 ### Controller Objects
 
@@ -82,12 +90,14 @@ See `src/Oxydizr/BaseController.js` for a base implementation of this interface.
 
 You can easily sub class Oxydizr.BaseController:
 
-    function MyController() {
-    }
+```javascript
+function MyController() {
+}
 
-    MyController.prototype = Object.create(Oxydizr.BaseController.prototype);
+MyController.prototype = Object.create(Oxydizr.BaseController.prototype);
 
-    MyController.prototype.foo = function() {};
+MyController.prototype.foo = function() {};
+```
 
 ### Building Your First Controller
 
@@ -101,73 +111,79 @@ There are three main steps to start using Oxydizr:
 First, let's build our Controller, which implements the `Oxydizr.IController`
 interface found in `src/interfaces.js`.
 
-    function SelectionController(element, controllerId) {
-        this.element = typeof element === "string" ? document.getElementById(element) : element;
-        this.controllerId = controllerId || this.element.id || null;
-    }
+```javascript
+function SelectionController(element, controllerId) {
+    this.element = typeof element === "string" ? document.getElementById(element) : element;
+    this.controllerId = controllerId || this.element.id || null;
+}
 
-    SelectionController.prototype = {
+SelectionController.prototype = {
 
-        controllerId: null,
+    controllerId: null,
 
-        constructor: SelectionController,
+    constructor: SelectionController,
 
-        onControllerRegistered: function(frontController, controllerId) {
-            frontController.registerEvents("click");
-        },
+    onControllerRegistered: function(frontController, controllerId) {
+        frontController.registerEvents("click");
+    },
 
-        onControllerUnregistered: function(frontController) {
-            // this controller has been unregistered
-        },
+    onControllerUnregistered: function(frontController) {
+        // this controller has been unregistered
+    },
 
-        toggleSelection: function click(event, element, params) {
-            if (element.classList.contains("selected")) {
-                element.classList.remove("selected");
-            }
-            else {
-                element.classList.add("selected");
-            }
+    toggleSelection: function click(event, element, params) {
+        if (element.classList.contains("selected")) {
+            element.classList.remove("selected");
         }
-    };
+        else {
+            element.classList.add("selected");
+        }
+    }
+};
+```
 
 Next, we need the HTML in which our controller will handle DOM events, plus some
 CSS to style the list items when they get selected. We will create two instances
 of SelectionController, so we need two lists:
 
-    <head>
-        ...
+```html
+<head>
+    ...
 
-        <style type="text/css">
-            .selected {
-                background-color: #ffc;
-            }
-        </style>
-    </head>
-    <body>
-        <ol id="fruits">
-            <li data-actions="fruits.toggleSelection">Apples</li>
-            <li data-actions="fruits.toggleSelection">Oranges</li>
-        </ol>
+    <style type="text/css">
+        .selected {
+            background-color: #ffc;
+        }
+    </style>
+</head>
+<body>
+    <ol id="fruits">
+        <li data-actions="fruits.toggleSelection">Apples</li>
+        <li data-actions="fruits.toggleSelection">Oranges</li>
+    </ol>
 
-        <ul id="colors">
-            <li data-actions="colors.toggleSelection">Red</li>
-            <li data-actions="colors.toggleSelection">Green</li>
-        </ul>
-    </body>
+    <ul id="colors">
+        <li data-actions="colors.toggleSelection">Red</li>
+        <li data-actions="colors.toggleSelection">Green</li>
+    </ul>
+</body>
+```
 
 Now, let's create an instance of Oxydizr.FrontController and register our two
 instances of SelectionController:
 
-        </ul>
+```html
+    </ul>
 
-        <script type="text/javascript">
-            var frontController = new Oxydizr.FrontController().init(document.documentElement);
+    <script type="text/javascript">
+        var frontController = new Oxydizr.FrontController().init(document.documentElement);
 
-            frontController.registerController(new SelectionController("fruits"));
-            frontController.registerController(new SelectionController("colors"));
-        </script>
+        frontController.registerController(new SelectionController("fruits"));
+        frontController.registerController(new SelectionController("colors"));
+    </script>
 
-    </body>
+</body>
+```
 
 That's all you need! Now when you click on the `<li>` tags they should toggle a
 yellow background color.
@@ -175,8 +191,10 @@ yellow background color.
 If you want to access the two instances of SelectionController that we
 registered, use the following code:
 
-    frontController.controllers.fruits
-    frontController.controllers.colors
+```javascript
+frontController.controllers.fruits
+frontController.controllers.colors
+```
 
 Our SelectionController class will use the Id of its root element as the
 `controllerId`. This controllerId is used by Oxydizr to identify that one
@@ -208,55 +226,63 @@ Let's take a "click" event as an example.
 The user clicks an image contained inside a link. The document object model tree
 for this bubbling event is shown below:
 
-    <html>
-        <body>
-            <form data-actions="blogPost.save">
-                <p>
-                    <a data-actions="slideshow.showFullSizeImage">
-                        <img>
+```html
+<html>
+    <body>
+        <form data-actions="blogPost.save">
+            <p>
+                <a data-actions="slideshow.showFullSizeImage">
+                    <img>
+```
 
 An instance of Oxydizr.FrontController was created and initialized like this:
 
-    var frontController = new Oxydizr.FrontController().init(document.documentElement);
+```javascript
+var frontController = new Oxydizr.FrontController().init(document.documentElement);
+```
 
 We have two hypothetical controllers. The psuedo code for each is below:
 
-    function BlogPostController() {}
+```javascript
+function BlogPostController() {}
 
-    BlogPostController.prototype = {
-        controllerId: "blogPost",
+BlogPostController.prototype = {
+    controllerId: "blogPost",
 
-        constructor: BlogPostController,
+    constructor: BlogPostController,
 
-        onControllerRegistered: function(frontController, controllerId) {
-            frontController.registerEvents("submit");
-        },
+    onControllerRegistered: function(frontController, controllerId) {
+        frontController.registerEvents("submit");
+    },
 
-        save: function submit(event, element, params) {
-            // Save the blog post
-        }
-    };
+    save: function submit(event, element, params) {
+        // Save the blog post
+    }
+};
 
-    function SlideshowController() {}
+function SlideshowController() {}
 
-    SlideshowController.prototype = {
-        controllerId: "slideshow",
+SlideshowController.prototype = {
+    controllerId: "slideshow",
 
-        constructor: SlideshowController,
+    constructor: SlideshowController,
 
-        onControllerRegistered: function(frontController, controllerId) {
-            frontController.registerEvents("click");
-        },
+    onControllerRegistered: function(frontController, controllerId) {
+        frontController.registerEvents("click");
+    },
 
-        showFullSizeImage: function click(event, element, params) {
-            window.open(element.href, "_blank");
-        }
-    };
+    showFullSizeImage: function click(event, element, params) {
+        window.open(element.href, "_blank");
+    }
+};
+```
 
 Then two hypothetical controllers were registered like this:
 
-    frontController.registerController(new BlogPostController());
-    frontController.registerController(new SlideshowController());
+```javascript
+frontController.registerController(new BlogPostController());
+frontController.registerController(new SlideshowController());
+```
 
 When the user clicks on the `<img>` tag, this becomes the target of the click
 event. The `<img>` is notified first of the mouse click. After those event
@@ -283,13 +309,15 @@ handlers have been processed, the `<a>` is notified of the click event, then the
    Oxydizr then inspects the `name` property on that method to see if matches
    the event type. **This is the critical part.**
 
-        SlideshowController.prototype = {
-            ...
-
-            showFullSizeImage: function click(event, element, params) {
-                ...
-            }
-        }
+  ```javascript
+  SlideshowController.prototype = {
+      ...
+  
+      showFullSizeImage: function click(event, element, params) {
+          ...
+      }
+  }
+  ```
 
    Notice how the `showFullSizeImage` method is defined with a named function.
    The `function click` part tells Oxydizr that this method should only be
@@ -331,32 +359,36 @@ the controller action method.
 
 The `data-action-params` must be structured in the following way:
 
-    {
-        "controllerId1.methodName": {
-            ...
-        },
-        "controllerId2.methodName": {
-            ...
-        }
+```javascript
+{
+    "controllerId1.methodName": {
+        ...
+    },
+    "controllerId2.methodName": {
+        ...
     }
+}
+```
 
 Since every HTML element can have multiple controller actions associated with
 it, the params passed to each controller method should be namespaced to the
 `controllerId` followed by a dot and the name of the method. Let's say we have
 this HTML tag:
 
-    <button
-        data-actions="blogPost.save slideshow.save"
-        data-action-params='{
-            "blogPost.save": {
-                id: 85
-            },
-            "slideshow.save": {
-                blogPostId: 85,
-                id: 482
-            }
-        }'
-    >Save</button>
+```html
+<button
+    data-actions="blogPost.save slideshow.save"
+    data-action-params='{
+        "blogPost.save": {
+            id: 85
+        },
+        "slideshow.save": {
+            blogPostId: 85,
+            id: 482
+        }
+    }'
+>Save</button>
+```
 
 The "Save" button executes two controller actions on two different controllers.
 
@@ -365,29 +397,31 @@ value of the "blogPost.save" property. The `save` method on the "slideshow"
 controller is the "slideshow.save" property. Let's look at the pseudo JavaScript
 code for each controller:
 
-    function BlogPostController() {}
+```javascript
+function BlogPostController() {}
 
-    BlogPostController.prototype = {
-        controllerId: "blogPost",
+BlogPostController.prototype = {
+    controllerId: "blogPost",
 
-        constructor: BlogPostController,
+    constructor: BlogPostController,
 
-        save: function click(event, element, params) {
-            console.log(params);
-        }
-    };
+    save: function click(event, element, params) {
+        console.log(params);
+    }
+};
 
-    function SlideshowController() {}
+function SlideshowController() {}
 
-    SlideshowController.prototype = {
-        controllerId: "blogPost",
+SlideshowController.prototype = {
+    controllerId: "blogPost",
 
-        constructor: SlideshowController,
+    constructor: SlideshowController,
 
-        save: function click(event, element, params) {
-            console.log(params);
-        }
-    };
+    save: function click(event, element, params) {
+        console.log(params);
+    }
+};
+```
 
 Clicking the "Save" button will pass the following values to
 `BlogPostController#save`:
@@ -445,9 +479,11 @@ done through many of the popular libraries out there.
 For example, if you are using jQuery and would like Oxydizr to use jQuery for
 event handling, add these script files to your document:
 
-    <script type="text/javascript" src="path/to/Oxydizr.js"></script>
-    <script type="text/javascript" src="path/to/Oxydizr/FrontController.js"></script>
-    <script type="text/javascript" src="path/to/Oxydizr/Adapters/jQueryAdapter.js"></script>
+```html
+<script type="text/javascript" src="path/to/Oxydizr.js"></script>
+<script type="text/javascript" src="path/to/Oxydizr/FrontController.js"></script>
+<script type="text/javascript" src="path/to/Oxydizr/Adapters/jQueryAdapter.js"></script>
+```
 
 That's all you need to do. Now the `event` object that gets passed into your
 controller actions will have been patched by jQuery.
@@ -457,23 +493,25 @@ controller actions will have been patched by jQuery.
 If you do not see an Adapter that fits your needs, use this boiler plate code
 to create your own:
 
-    Oxydizr.FrontController.prototype._addEventListener: function(element, name, handler, capture) {
-        if ((name === "focus" || name === "blur") && capture) {
-            // listen for focus or blur events
-        }
-        else {
-            // listen for other events
-        }
-    };
+```javascript
+Oxydizr.FrontController.prototype._addEventListener: function(element, name, handler, capture) {
+    if ((name === "focus" || name === "blur") && capture) {
+        // listen for focus or blur events
+    }
+    else {
+        // listen for other events
+    }
+};
 
-    Oxydizr.FrontController.prototype._removeEventListener = function(element, name, handler, capture) {
-        if ((name === "focus" || name === "blur") && capture) {
-            // unbind from focus or blur events
-        }
-        else {
-            // unbind other events
-        }
-    };
+Oxydizr.FrontController.prototype._removeEventListener = function(element, name, handler, capture) {
+    if ((name === "focus" || name === "blur") && capture) {
+        // unbind from focus or blur events
+    }
+    else {
+        // unbind other events
+    }
+};
+```
 
 Save your Adapter in a separate JavaScript file and include it after
 FontController.js.
@@ -498,10 +536,12 @@ an error, it is allowed to bubble up and the DOM event is not canceled. By
 setting the `catchErrors` property on Oxydizr.FrontController to `true`, you
 will have access to two levels of error handling.
 
-    var frontController = new Oxydizr.FrontController().init(document.documentElement);
+```javascript
+var frontController = new Oxydizr.FrontController().init(document.documentElement);
 
-    // Handle errors thrown when executing controller actions
-    frontController.catchErrors = true;
+// Handle errors thrown when executing controller actions
+frontController.catchErrors = true;
+```
 
 ### Error Handling at the Application Level
 
@@ -567,11 +607,15 @@ recall from earlier, Oxydizr looks at a controller method's name to know if the
 method should be invoked for a certain event type. If a JavaScript minifier
 takes this code:
 
-    var someFunction = function foo() {};
+```javascript
+var someFunction = function foo() {};
+```
 
 And turns it into:
 
-    var a = function() {};
+```javascript
+var a = function() {};
+```
 
 The `function foo()` part is what gives that Function object its name, and
 removing that essentially changes runtime data in JavaScript. Oxydizr will fail
